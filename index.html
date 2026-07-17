@@ -28,11 +28,11 @@
   --land: #F7F0DC;
   --land-line: #7E786A;
   --found: #35A78D;
-  --heat0: #F3E2C0;
-  --heat1: #EDBD7D;
-  --heat2: #E28E4D;
-  --heat3: #CC5731;
-  --heat4: #A72823;
+  --heat0: #F9F0B8;
+  --heat1: #F5C75F;
+  --heat2: #EA8A33;
+  --heat3: #D1451E;
+  --heat4: #8C0F0C;
   --warn: #9A6A14;
   --error: #AE3A2E;
   --pop: 6px 7px 0 -1.5px var(--surface), 6px 7px 0 0 var(--line);
@@ -63,11 +63,11 @@
     --land: #272B24;
     --land-line: #8F8A7B;
     --found: #3FB598;
-    --heat0: #4A3A28;
-    --heat1: #6E4A26;
-    --heat2: #9C4E27;
-    --heat3: #C64730;
-    --heat4: #EE5A3E;
+    --heat0: #383120;
+    --heat1: #6C4A1E;
+    --heat2: #A65B1D;
+    --heat3: #E25326;
+    --heat4: #FF7A45;
     --warn: #D9A24C;
     --error: #E06A57;
   }
@@ -93,11 +93,11 @@
   --land: #272B24;
   --land-line: #8F8A7B;
   --found: #3FB598;
-  --heat0: #4A3A28;
-  --heat1: #6E4A26;
-  --heat2: #9C4E27;
-  --heat3: #C64730;
-  --heat4: #EE5A3E;
+  --heat0: #383120;
+  --heat1: #6C4A1E;
+  --heat2: #A65B1D;
+  --heat3: #E25326;
+  --heat4: #FF7A45;
   --warn: #D9A24C;
   --error: #E06A57;
 }
@@ -122,11 +122,11 @@
   --land: #F7F0DC;
   --land-line: #7E786A;
   --found: #35A78D;
-  --heat0: #F3E2C0;
-  --heat1: #EDBD7D;
-  --heat2: #E28E4D;
-  --heat3: #CC5731;
-  --heat4: #A72823;
+  --heat0: #F9F0B8;
+  --heat1: #F5C75F;
+  --heat2: #EA8A33;
+  --heat3: #D1451E;
+  --heat4: #8C0F0C;
   --warn: #9A6A14;
   --error: #AE3A2E;
 }
@@ -392,6 +392,7 @@ main {
 .msg.warn { color: var(--warn); }
 .msg.error { color: var(--error); }
 .msg.good { color: var(--found); font-weight: 600; }
+.msg.cool { color: var(--accent-hi); font-weight: 600; }
 
 .stats { display: flex; align-items: stretch; gap: 9px; }
 .stat {
@@ -447,8 +448,8 @@ main {
   gap: 10px;
   padding: 7px 12px;
   border-radius: 12px;
-  border: 1.5px solid color-mix(in srgb, var(--line) 85%, var(--heat, var(--line)));
-  background: color-mix(in srgb, var(--heat, var(--surface)) 24%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--line) 65%, var(--heat, var(--line)));
+  background: color-mix(in srgb, var(--heat, var(--surface)) 38%, var(--surface));
 }
 @keyframes rowIn { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
 .row.new { animation: rowIn .3s ease-out; }
@@ -775,6 +776,9 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
       didYouMean: "Did you mean one of these?",
       accepted: (name) => `Interpreted as ${name}.`,
       neighbor: "Borders it!",
+      warmer: (name) => `${name} is warmer 🔥`,
+      cooler: (name) => `${name} is cooler ❄️`,
+      sameTemp: (name) => `${name} is just as far.`,
       themeLabel: "Toggle dark mode",
       practice: "Practice mode — unlimited games · inspired by Globle",
       credit: "Boundaries: geoBoundaries · Bangladesh Bureau of Statistics",
@@ -824,6 +828,9 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
       didYouMean: "আপনি কি এগুলোর কোনোটি বোঝাতে চেয়েছেন?",
       accepted: (name) => `${name} ধরে নেওয়া হলো।`,
       neighbor: "একদম পাশের জেলা!",
+      warmer: (name) => `${name} — আগের চেয়ে গরম 🔥`,
+      cooler: (name) => `${name} — আগের চেয়ে ঠান্ডা ❄️`,
+      sameTemp: (name) => `${name} — একই দূরত্বে।`,
       themeLabel: "থিম বদলান",
       practice: "অনুশীলন মোড — যত খুশি খেলুন · Globle-অনুপ্রাণিত",
       credit: "সীমানা: geoBoundaries · বাংলাদেশ পরিসংখ্যান ব্যুরো",
@@ -1078,8 +1085,14 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
       setMsg(null);
       endGame("win");
     } else {
-      if (viaFuzzy) setMsg({ kind: "", key: "accepted", args: [nameOf(i)] });
-      else if (kmOf(i) === 0) setMsg({ kind: "good", key: "neighbor" });
+      const prev = guesses.length >= 2 ? guesses[guesses.length - 2] : -1;
+      if (kmOf(i) === 0) setMsg({ kind: "good", key: "neighbor" });
+      else if (prev >= 0) {
+        const d = kmOf(i) - kmOf(prev);
+        if (d < 0) setMsg({ kind: "good", key: "warmer", args: [nameOf(i)] });
+        else if (d > 0) setMsg({ kind: "cool", key: "cooler", args: [nameOf(i)] });
+        else setMsg({ kind: "", key: "sameTemp", args: [nameOf(i)] });
+      } else if (viaFuzzy) setMsg({ kind: "", key: "accepted", args: [nameOf(i)] });
       else setMsg(null);
       paintAll();
     }
