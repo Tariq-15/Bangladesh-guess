@@ -217,6 +217,7 @@ header.top {
   transition: background .15s;
 }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.seg-desc { margin: -3px 4px 0; font-size: 11.5px; line-height: 1.45; color: var(--ink-2); }
 
 .btn {
   border: 1.5px solid var(--line);
@@ -554,10 +555,11 @@ footer a { color: inherit; }
 
     <aside class="panel" aria-label="Guessing panel">
       <div class="seg" role="group" aria-label="Difficulty level">
-        <button type="button" id="lv-rookie" aria-pressed="true">Rookie</button>
+        <button type="button" id="lv-rookie" aria-pressed="false">Rookie</button>
         <button type="button" id="lv-novice" aria-pressed="false">Novice</button>
-        <button type="button" id="lv-expert" aria-pressed="false">Expert</button>
+        <button type="button" id="lv-expert" aria-pressed="true">Expert</button>
       </div>
+      <p class="seg-desc" id="lv-desc"></p>
 
       <div class="banner" id="banner" hidden>
         <span class="kicker" id="banner-kicker"></span>
@@ -758,6 +760,11 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
       lvRookie: "Rookie",
       lvNovice: "Novice",
       lvExpert: "Expert",
+      lvDesc: {
+        rookie: "Easy — shows distance, direction arrows and hints.",
+        novice: "Medium — shows distance only, no direction arrows.",
+        expert: "Hard — heat colors only: no distance, no direction, no hints.",
+      },
       copyResult: "Copy result",
       copied: "Copied!",
       downloadCard: "Download card",
@@ -802,6 +809,11 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
       lvRookie: "শিক্ষানবিশ",
       lvNovice: "নবিশ",
       lvExpert: "বিশেষজ্ঞ",
+      lvDesc: {
+        rookie: "সহজ — দূরত্ব, দিকনির্দেশ তীর ও ইঙ্গিত দেখায়।",
+        novice: "মাঝারি — শুধু দূরত্ব দেখায়, দিকনির্দেশ তীর নেই।",
+        expert: "কঠিন — শুধু রঙের আভাস: দূরত্ব, দিক বা ইঙ্গিত নেই।",
+      },
       copyResult: "ফলাফল কপি",
       copied: "কপি হয়েছে!",
       downloadCard: "কার্ড ডাউনলোড",
@@ -836,6 +848,15 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
   };
   let lang = "en";
   const T = () => I18N[lang];
+
+  /* difficulty: what feedback each level reveals while playing */
+  const LEVELS = {
+    rookie: { km: true, dir: true, hints: true },
+    novice: { km: true, dir: false, hints: true },
+    expert: { km: false, dir: false, hints: false },
+  };
+  let level = LEVELS[store.get("bgg-level")] ? store.get("bgg-level") : "expert";
+  const LV = () => LEVELS[level];
 
   function currentTheme() {
     const attr = document.documentElement.getAttribute("data-theme");
@@ -926,7 +947,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     done = false; revealed = false; hintCount = 0;
     lastMsg = null;
     elBanner.hidden = true;
-    $("btn-hint").disabled = false;
+    $("btn-hint").disabled = !LV().hints;
     $("btn-reveal").disabled = false;
     elInput.disabled = false;
     elInput.value = "";
@@ -980,10 +1001,14 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
       li.className = "row" + (isTarget ? " target" : "") + (i === newest ? " new" : "");
       if (!isTarget) li.style.setProperty("--heat", heatColor(km, stops, D.maxKm));
       else li.style.setProperty("--heat", "var(--found)");
-      const dir = isTarget ? "✓" : arrowSvg(bearingDeg(i, target).toFixed(0));
+      // expert/novice hide feedback while playing; everything is revealed once the game ends
+      const dir = isTarget ? "✓"
+        : (LV().dir || done) ? arrowSvg(bearingDeg(i, target).toFixed(0)) : "";
       const kmCell = isTarget
         ? `<span class="km">${T().found}</span>`
-        : `<span class="km">${fmtNum(km)} <small>${T().km}</small></span>`;
+        : (LV().km || done)
+          ? `<span class="km">${fmtNum(km)} <small>${T().km}</small></span>`
+          : `<span class="km"></span>`;
       li.innerHTML =
         `<span class="swatch" aria-hidden="true"></span>` +
         `<span class="names"><span class="n1">${nameOf(i)}</span><span class="n2">${altNameOf(i)}</span></span>` +
@@ -997,7 +1022,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     const others = guesses.filter((i) => i !== target);
     if (done && guesses.includes(target)) {
       elStatClose.innerHTML = `${fmtNum(0)} <small>${T().km}</small>`;
-    } else if (others.length) {
+    } else if (others.length && (LV().km || done)) {
       const min = Math.min(...others.map(kmOf));
       elStatClose.innerHTML = `${fmtNum(min)} <small>${T().km}</small>`;
     } else {
@@ -1156,7 +1181,9 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     const km = kmOf(i);
     elTip.innerHTML = i === target
       ? `${nameOf(i)} · <span class="km">✓ ${T().found}</span>`
-      : `${nameOf(i)} · <span class="km">${fmtNum(km)} ${T().km}</span>`;
+      : (LV().km || done)
+        ? `${nameOf(i)} · <span class="km">${fmtNum(km)} ${T().km}</span>`
+        : nameOf(i);
     elTip.style.display = "block";
     const wrap = elMap.parentElement.getBoundingClientRect();
     let x = e.clientX - wrap.left + 14, y = e.clientY - wrap.top + 10;
@@ -1171,6 +1198,22 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
   /* ================= buttons ================= */
   $("btn-new").addEventListener("click", newGame);
   $("btn-again").addEventListener("click", newGame);
+
+  function applyLevel() {
+    for (const lv of Object.keys(LEVELS))
+      $("lv-" + lv).setAttribute("aria-pressed", lv === level ? "true" : "false");
+    $("lv-desc").textContent = T().lvDesc[level];
+  }
+
+  Object.keys(LEVELS).forEach(function (lv) {
+    $("lv-" + lv).addEventListener("click", function () {
+      if (lv === level) return;
+      level = lv;
+      store.set("bgg-level", lv);
+      applyLevel();
+      newGame(); // changing difficulty starts a fresh round
+    });
+  });
 
   $("btn-hint").addEventListener("click", function () {
     if (done) return;
@@ -1225,6 +1268,10 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     $("t-far").textContent = t.far;
     $("t-close").textContent = t.close;
     $("t-found").textContent = t.found;
+    $("lv-rookie").textContent = t.lvRookie;
+    $("lv-novice").textContent = t.lvNovice;
+    $("lv-expert").textContent = t.lvExpert;
+    $("lv-desc").textContent = t.lvDesc[level];
     $("t-practice").textContent = t.practice;
     $("t-credit").textContent = t.credit;
     $("btn-theme").setAttribute("aria-label", t.themeLabel);
@@ -1252,6 +1299,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
 
   /* ================= boot ================= */
   buildMap();
+  applyLevel();
   setLang(lang);
   repaintForTheme();
   newGame();
