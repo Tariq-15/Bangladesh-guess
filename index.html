@@ -495,7 +495,140 @@ main {
 }
 .banner .name { font-family: var(--font-display); font-size: 21px; font-weight: 700; line-height: 1.2; }
 .banner .sub { font-size: 13px; color: var(--ink-2); }
-.banner .btn { margin-top: 7px; align-self: flex-start; }
+.banner-btns { display: flex; gap: 8px; margin-top: 7px; flex-wrap: wrap; }
+
+/* ---------- report card ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(24, 21, 16, .55);
+  backdrop-filter: blur(2px);
+}
+.overlay[hidden] { display: none; }
+.report {
+  width: min(432px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--pop);
+  padding: 17px;
+}
+@keyframes reportIn { from { transform: translateY(12px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+.report { animation: reportIn .28s cubic-bezier(.2, .9, .3, 1.2); }
+@media (prefers-reduced-motion: reduce) { .report { animation: none; } }
+.rc-close {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  width: 30px;
+  height: 30px;
+  border: 1.5px dashed color-mix(in srgb, var(--line) 60%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1;
+}
+.rc-close:hover { background: var(--surface-2); color: var(--ink); }
+.rc-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--accent-hi);
+}
+.rc-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.2; }
+.rc-sub { font-size: 13px; font-weight: 600; }
+.rc-sub.good { color: var(--found); }
+.rc-sub.bad { color: var(--error); }
+.rc-top { display: flex; align-items: center; gap: 18px; margin-top: 2px; }
+.rc-k {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-2);
+}
+.rc-gradebox { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rc-grade {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--yellow);
+  color: var(--on-accent);
+  border: 1.5px solid var(--line);
+  box-shadow: var(--pop-sm);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+}
+.rc-grade.fail { background: var(--error); color: var(--surface); }
+.rc-scorebox { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rc-score {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.rc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: 13px;
+  padding: 7px 13px;
+  min-width: 0;
+  box-shadow: var(--pop-sm);
+}
+.rc-stat:nth-child(1) { background: var(--lav); }
+.rc-stat:nth-child(2) { background: var(--mint); }
+.rc-stat .v {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-trail {
+  font-size: 16px;
+  letter-spacing: 1px;
+  line-height: 1.5;
+  word-break: break-all;
+  background: var(--surface-2);
+  border: 1.5px dashed color-mix(in srgb, var(--line) 55%, transparent);
+  border-radius: 11px;
+  padding: 7px 10px;
+}
+.rc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.rc-actions .btn {
+  flex: 1 1 calc(50% - 8px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.rc-actions .btn svg { width: 15px; height: 15px; flex: none; }
+#rc-again { flex-basis: 100%; }
 
 /* ---------- footer ---------- */
 footer {
@@ -566,7 +699,10 @@ footer a { color: inherit; }
         <span class="kicker" id="banner-kicker"></span>
         <span class="name" id="banner-name"></span>
         <span class="sub" id="banner-sub"></span>
-        <button type="button" class="btn primary" id="btn-again">Play again</button>
+        <div class="banner-btns">
+          <button type="button" class="btn primary" id="btn-again">Play again</button>
+          <button type="button" class="btn" id="btn-report">Report card</button>
+        </div>
       </div>
 
       <form id="guess-form" autocomplete="off">
@@ -600,6 +736,49 @@ footer a { color: inherit; }
       <ol class="guesses" id="guesses"></ol>
     </aside>
   </main>
+
+  <div class="overlay" id="report" hidden role="dialog" aria-modal="true" aria-labelledby="rc-kicker">
+    <div class="report">
+      <button type="button" class="rc-close" id="rc-close" aria-label="Close">✕</button>
+      <span class="rc-kicker" id="rc-kicker">Report Card</span>
+      <div>
+        <div class="rc-name" id="rc-name"></div>
+        <div class="rc-sub" id="rc-sub"></div>
+      </div>
+      <div class="rc-top">
+        <div class="rc-gradebox">
+          <div class="rc-grade" id="rc-grade"></div>
+          <span class="rc-k" id="rc-grade-k">Grade</span>
+        </div>
+        <div class="rc-scorebox">
+          <span class="rc-k" id="rc-score-k">Score</span>
+          <span class="rc-score" id="rc-score"></span>
+        </div>
+      </div>
+      <div class="rc-grid">
+        <div class="rc-stat"><span class="rc-k" id="rc-guesses-k">Guesses</span><span class="v" id="rc-guesses"></span></div>
+        <div class="rc-stat"><span class="rc-k" id="rc-hints-k">Hints</span><span class="v" id="rc-hints"></span></div>
+        <div class="rc-stat"><span class="rc-k" id="rc-time-k">Time</span><span class="v" id="rc-time"></span></div>
+        <div class="rc-stat"><span class="rc-k" id="rc-mode-k">Mode</span><span class="v" id="rc-mode"></span></div>
+      </div>
+      <div class="rc-trail" id="rc-trail" aria-hidden="true"></div>
+      <div class="rc-actions">
+        <button type="button" class="btn" id="rc-share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-3.4M8.6 13.3l6.8 3.4"/></svg>
+          <span id="rc-share-t">Share</span>
+        </button>
+        <button type="button" class="btn" id="rc-copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="rc-copy-t">Copy</span>
+        </button>
+        <button type="button" class="btn" id="rc-download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <span id="rc-download-t">Download</span>
+        </button>
+        <button type="button" class="btn primary" id="rc-again">Play again</button>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <span id="t-practice">Practice mode — unlimited games · inspired by Globle</span>
@@ -766,9 +945,18 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
         novice: "Medium — shows distance only, no direction arrows.",
         expert: "Hard — heat colors only: no distance, no direction, no hints.",
       },
-      copyResult: "Copy result",
+      copyResult: "Copy",
       copied: "Copied!",
-      downloadCard: "Download card",
+      downloadCard: "Download",
+      reportCard: "Report Card",
+      grade: "Grade",
+      score: "Score",
+      hintsUsed: "Hints",
+      timeTaken: "Time",
+      mode: "Mode",
+      share: "Share",
+      closeLabel: "Close",
+      shareStats: (h, tm, sc, g) => `💡 ${h} · ⏱️ ${tm} · 🏆 ${sc} pts · Grade ${g}`,
       shareWin: (name, n, lv) => `🇧🇩 Bangladesh Guesser — found ${name} in ${n} ${n === 1 ? "guess" : "guesses"} (${lv})`,
       shareLose: (name, n, lv) => `🇧🇩 Bangladesh Guesser — ${name} beat me after ${n} ${n === 1 ? "guess" : "guesses"} (${lv})`,
       already: (name) => `You already guessed ${name}.`,
@@ -818,9 +1006,18 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
         novice: "মাঝারি — শুধু দূরত্ব দেখায়, দিকনির্দেশ তীর নেই।",
         expert: "কঠিন — শুধু রঙের আভাস: দূরত্ব, দিক বা ইঙ্গিত নেই।",
       },
-      copyResult: "ফলাফল কপি",
+      copyResult: "কপি",
       copied: "কপি হয়েছে!",
-      downloadCard: "কার্ড ডাউনলোড",
+      downloadCard: "ডাউনলোড",
+      reportCard: "রিপোর্ট কার্ড",
+      grade: "গ্রেড",
+      score: "স্কোর",
+      hintsUsed: "ইঙ্গিত",
+      timeTaken: "সময়",
+      mode: "মোড",
+      share: "শেয়ার",
+      closeLabel: "বন্ধ করুন",
+      shareStats: (h, tm, sc, g) => `💡 ${h} · ⏱️ ${tm} · 🏆 ${sc} পয়েন্ট · গ্রেড ${g}`,
       shareWin: (name, n, lv) => `🇧🇩 জেলাখুঁজি — ${bnNum(n)} বার অনুমানে ${name} পাওয়া গেছে (${lv})`,
       shareLose: (name, n, lv) => `🇧🇩 জেলাখুঁজি — ${bnNum(n)} বার চেষ্টা করেও ${name} পাইনি (${lv})`,
       already: (name) => `${name} আগেই অনুমান করেছেন।`,
@@ -945,6 +1142,8 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
   const NUM = D.n;
   let target = -1, guesses = [], done = false, revealed = false, hintCount = 0;
   let lastMsg = null; // {kind, key, args} re-renderable on language switch
+  let startAt = 0, elapsedMs = 0; // round clock: runs from first interaction to game end
+  function markStart() { if (!startAt && !done) startAt = Date.now(); }
 
   function newGame() {
     let t;
@@ -952,7 +1151,9 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     target = t;
     guesses = [];
     done = false; revealed = false; hintCount = 0;
+    startAt = 0; elapsedMs = 0;
     lastMsg = null;
+    closeReport();
     elBanner.hidden = true;
     $("btn-hint").disabled = !LV().hints;
     $("btn-reveal").disabled = false;
@@ -1052,10 +1253,12 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     $("banner-name").textContent = nameOf(target) + " · " + altNameOf(target);
     $("banner-sub").textContent = kind === "win" ? t.winSub(guesses.length) : t.revealSub;
     $("btn-again").textContent = t.playAgain;
+    $("btn-report").textContent = t.reportCard;
     elBanner.hidden = false;
   }
 
   function endGame(kind) {
+    elapsedMs = startAt ? Date.now() - startAt : 0;
     done = true;
     revealed = kind === "reveal";
     elInput.disabled = true;
@@ -1069,11 +1272,13 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     showBanner(kind);
     renderStats();
     applyLangDynamic(); // refresh placeholder
+    showReport();
   }
 
   /* ================= guessing ================= */
   function makeGuess(i, viaFuzzy) {
     if (done) return;
+    markStart();
     if (guesses.includes(i)) {
       setMsg({ kind: "warn", key: "already", args: [nameOf(i)] });
       return;
@@ -1162,6 +1367,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
 
   elInput.addEventListener("input", function () {
     if (done) return;
+    markStart();
     setMsg(null);
     const q = elInput.value;
     if (!normalize(q)) { closeSuggest(); return; }
@@ -1183,6 +1389,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
   elForm.addEventListener("submit", function (e) { e.preventDefault(); onSubmit(); });
 
   document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !elReport.hidden) { closeReport(); return; }
     if (e.key === "/" && document.activeElement !== elInput) { e.preventDefault(); elInput.focus(); }
   });
 
@@ -1230,6 +1437,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
 
   $("btn-hint").addEventListener("click", function () {
     if (done) return;
+    markStart();
     const name = D.districts[target].en;
     const maxLetters = Math.ceil(name.length / 2); // never spell out the full answer
     const dv = T().div(D.districts[target].div);
@@ -1245,6 +1453,316 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
   $("btn-reveal").addEventListener("click", function () {
     if (done) return;
     endGame("reveal");
+  });
+
+  /* ================= report card ================= */
+  const elReport = $("report");
+  const SCORE = {
+    perWrong: { rookie: 60, novice: 50, expert: 30 },
+    perHint: 60,
+    mult: { rookie: 1, novice: 1.15, expert: 1.35 },
+  };
+  const lvName = () => T()["lv" + level[0].toUpperCase() + level.slice(1)];
+
+  function fmtTime(ms) {
+    const sec = Math.max(0, Math.round(ms / 1000));
+    const str = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+    return lang === "bn" ? bnNum(str) : str;
+  }
+
+  // 1000-point round score, graded on the Bangladeshi scale (A+ … F); a win never drops below D
+  function scoreRound() {
+    if (revealed || !guesses.includes(target)) return { won: false, score: 0, grade: "F" };
+    const wrong = guesses.length - 1;
+    const overSec = Math.max(0, elapsedMs / 1000 - 30);
+    const raw = Math.max(0, 1000 - SCORE.perWrong[level] * wrong - SCORE.perHint * hintCount - Math.min(250, overSec * 2));
+    const r = raw / 1000;
+    const grade = r >= .8 ? "A+" : r >= .7 ? "A" : r >= .6 ? "A-" : r >= .5 ? "B" : r >= .4 ? "C" : "D";
+    return { won: true, score: Math.round(raw * SCORE.mult[level]), grade };
+  }
+
+  function trailStr() {
+    const marks = guesses.map(function (i) {
+      if (i === target) return "✅";
+      const heat = Math.pow(1 - kmOf(i) / D.maxKm, 2);
+      return heat >= .75 ? "🟥" : heat >= .5 ? "🟧" : heat >= .28 ? "🟨" : heat >= .12 ? "🟩" : "🟦";
+    });
+    if (revealed) marks.push("🏳️");
+    return marks.join("");
+  }
+
+  function shareText() {
+    const t = T(), s = scoreRound();
+    const head = (s.won ? t.shareWin : t.shareLose)(nameOf(target), guesses.length, lvName());
+    return head + "\n" + t.shareStats(fmtNum(hintCount), fmtTime(elapsedMs), fmtNum(s.score), s.grade) + "\n" + trailStr();
+  }
+
+  function renderReport() {
+    const t = T(), s = scoreRound();
+    $("rc-kicker").textContent = t.reportCard;
+    $("rc-close").setAttribute("aria-label", t.closeLabel);
+    $("rc-name").textContent = nameOf(target) + " · " + altNameOf(target);
+    const sub = $("rc-sub");
+    sub.textContent = s.won ? t.winSub(guesses.length) : t.revealSub;
+    sub.className = "rc-sub " + (s.won ? "good" : "bad");
+    const g = $("rc-grade");
+    g.textContent = s.grade;
+    g.classList.toggle("fail", s.grade === "F");
+    $("rc-grade-k").textContent = t.grade;
+    $("rc-score-k").textContent = t.score;
+    $("rc-score").textContent = fmtNum(s.score);
+    $("rc-guesses-k").textContent = t.guesses;
+    $("rc-guesses").textContent = fmtNum(guesses.length);
+    $("rc-hints-k").textContent = t.hintsUsed;
+    $("rc-hints").textContent = fmtNum(hintCount);
+    $("rc-time-k").textContent = t.timeTaken;
+    $("rc-time").textContent = fmtTime(elapsedMs);
+    $("rc-mode-k").textContent = t.mode;
+    $("rc-mode").textContent = lvName();
+    $("rc-trail").textContent = trailStr();
+    $("rc-share-t").textContent = t.share;
+    $("rc-copy-t").textContent = t.copyResult;
+    $("rc-download-t").textContent = t.downloadCard;
+    $("rc-again").textContent = t.playAgain;
+  }
+
+  function showReport() {
+    renderReport();
+    elReport.hidden = false;
+    $("rc-again").focus();
+  }
+
+  function closeReport() {
+    if (elReport.hidden) return;
+    elReport.hidden = true;
+    if (done) $("btn-again").focus();
+  }
+
+  /* --- shareable PNG card --- */
+  const CARD_FONT = '"Segoe UI", system-ui, "Noto Sans Bengali", "Nirmala UI", "Hind Siliguri", sans-serif';
+
+  function rrect(c, X, Y, w, h, r) {
+    c.beginPath();
+    c.moveTo(X + r, Y);
+    c.arcTo(X + w, Y, X + w, Y + h, r);
+    c.arcTo(X + w, Y + h, X, Y + h, r);
+    c.arcTo(X, Y + h, X, Y, r);
+    c.arcTo(X, Y, X + w, Y, r);
+    c.closePath();
+  }
+
+  function fitFont(c, txt, weight, size, maxW) {
+    c.font = weight + " " + size + "px " + CARD_FONT;
+    while (size > 16 && c.measureText(txt).width > maxW) {
+      size -= 2;
+      c.font = weight + " " + size + "px " + CARD_FONT;
+    }
+  }
+
+  function drawCard() {
+    const cs = getComputedStyle(document.documentElement);
+    const C = (v) => cs.getPropertyValue(v).trim();
+    const stops = heatStops();
+    const t = T(), s = scoreRound();
+    const W = 1080, H = 1350;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const c = cv.getContext("2d");
+    const F = (wt, sz) => wt + " " + sz + "px " + CARD_FONT;
+
+    // backdrop with the app's soft dots
+    c.fillStyle = C("--bg");
+    c.fillRect(0, 0, W, H);
+    c.fillStyle = C("--dot");
+    [[70, 120, 90], [1010, 240, 120], [140, 1230, 100], [950, 1130, 70], [560, 40, 50]].forEach(function (d) {
+      c.beginPath(); c.arc(d[0], d[1], d[2], 0, 7); c.fill();
+    });
+
+    // card with offset "pop" shadow
+    rrect(c, 62, 66, W - 114, H - 120, 44); c.fillStyle = C("--line"); c.fill();
+    rrect(c, 52, 52, W - 104, H - 104, 44); c.fillStyle = C("--surface"); c.fill();
+    c.lineWidth = 3; c.strokeStyle = C("--line"); c.stroke();
+
+    // header: flag + titles
+    rrect(c, 100, 96, 78, 78, 22); c.fillStyle = "#006A4E"; c.fill();
+    c.beginPath(); c.arc(135, 135, 19, 0, 7); c.fillStyle = "#F42A41"; c.fill();
+    c.fillStyle = C("--ink"); c.font = F(700, 46);
+    c.fillText(t.title, 198, 148);
+    c.fillStyle = C("--accent-hi"); c.font = F(600, 25);
+    c.fillText(t.tag, 198, 186);
+    c.save();
+    c.setLineDash([3, 9]); c.lineWidth = 2; c.strokeStyle = C("--ink-3");
+    c.beginPath(); c.moveTo(100, 228); c.lineTo(W - 100, 228); c.stroke();
+    c.restore();
+
+    // kicker, district name, result line
+    c.fillStyle = C("--accent-hi"); c.font = F(800, 25);
+    c.fillText(t.reportCard.toUpperCase(), 100, 296);
+    fitFont(c, nameOf(target), 800, 54, 410);
+    c.fillStyle = C("--ink");
+    c.fillText(nameOf(target), 100, 356);
+    fitFont(c, altNameOf(target), 600, 29, 410);
+    c.fillStyle = C("--ink-2");
+    c.fillText(altNameOf(target), 100, 398);
+    const resLine = s.won ? t.winSub(guesses.length) : t.revealSub;
+    fitFont(c, resLine, 700, 24, 410);
+    c.fillStyle = s.won ? C("--found") : C("--error");
+    c.fillText(resLine, 100, 440);
+
+    // grade seal + score
+    c.beginPath(); c.arc(180, 566, 82, 0, 7);
+    c.fillStyle = s.grade === "F" ? C("--error") : C("--yellow"); c.fill();
+    c.lineWidth = 3; c.strokeStyle = C("--line"); c.stroke();
+    c.fillStyle = s.grade === "F" ? C("--surface") : C("--on-accent");
+    c.font = F(800, 72); c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(s.grade, 180, 572);
+    c.textBaseline = "alphabetic";
+    c.font = F(700, 21); c.fillStyle = C("--ink-2");
+    c.fillText(t.grade.toUpperCase(), 180, 692);
+    c.textAlign = "left";
+    c.fillStyle = C("--ink-2"); c.font = F(700, 21);
+    c.fillText(t.score.toUpperCase(), 316, 512);
+    fitFont(c, fmtNum(s.score), 800, 80, 190);
+    c.fillStyle = C("--ink");
+    c.fillText(fmtNum(s.score), 316, 596);
+
+    // stat tiles
+    const tiles = [
+      [t.guesses, fmtNum(guesses.length), C("--lav")],
+      [t.hintsUsed, fmtNum(hintCount), C("--mint")],
+      [t.timeTaken, fmtTime(elapsedMs), C("--surface-2")],
+      [t.mode, lvName(), C("--surface-2")],
+    ];
+    tiles.forEach(function (tile, k) {
+      const tx = 100 + (k % 2) * 208, ty = 736 + ((k / 2) | 0) * 120;
+      rrect(c, tx, ty, 192, 104, 18);
+      c.fillStyle = tile[2]; c.fill();
+      c.lineWidth = 2; c.strokeStyle = C("--line"); c.stroke();
+      fitFont(c, String(tile[0]).toUpperCase(), 700, 17, 162);
+      c.fillStyle = C("--ink-2");
+      c.fillText(String(tile[0]).toUpperCase(), tx + 16, ty + 32);
+      fitFont(c, String(tile[1]), 800, 33, 162);
+      c.fillStyle = C("--ink");
+      c.fillText(String(tile[1]), tx + 16, ty + 78);
+    });
+
+    // mini heat map
+    rrect(c, 540, 262, 440, 694, 30);
+    c.fillStyle = C("--water"); c.fill();
+    c.lineWidth = 2.5; c.strokeStyle = C("--line"); c.stroke();
+    const sc = Math.min(404 / VW, 658 / VH);
+    c.save();
+    c.translate(540 + (440 - VW * sc) / 2, 262 + (694 - VH * sc) / 2);
+    c.scale(sc, sc);
+    paths.forEach(function (p, i) {
+      if (i === target) return;
+      const pd = new Path2D(p.getAttribute("d"));
+      c.fillStyle = guesses.includes(i) ? heatColor(kmOf(i), stops, D.maxKm) : C("--land");
+      c.fill(pd, "evenodd");
+      c.lineWidth = 1 / sc;
+      c.strokeStyle = C("--land-line");
+      c.stroke(pd);
+    });
+    const tp = new Path2D(paths[target].getAttribute("d"));
+    c.fillStyle = C("--found");
+    c.fill(tp, "evenodd");
+    c.lineWidth = 2.2 / sc;
+    c.strokeStyle = C("--line");
+    c.stroke(tp);
+    c.restore();
+
+    // guess trail as heat squares (chronological, capped at 40)
+    let marks = guesses.map(function (i) { return i === target ? "win" : heatColor(kmOf(i), stops, D.maxKm); });
+    if (revealed) marks.push("flag");
+    let extra = 0;
+    if (marks.length > 40) { extra = marks.length - 40; marks = marks.slice(-40); }
+    let tx = 100, ty = 1010;
+    if (extra) {
+      c.fillStyle = C("--ink-2"); c.font = F(700, 22);
+      const lbl = "+" + fmtNum(extra);
+      c.fillText(lbl, tx, ty + 24);
+      tx += c.measureText(lbl).width + 12;
+    }
+    marks.forEach(function (m) {
+      if (tx + 34 > W - 100) { tx = 100; ty += 43; }
+      rrect(c, tx, ty, 34, 34, 9);
+      c.fillStyle = m === "win" ? C("--found") : m === "flag" ? C("--surface-2") : m;
+      c.fill();
+      c.lineWidth = 1.6; c.strokeStyle = C("--line"); c.stroke();
+      if (m === "win" || m === "flag") {
+        c.fillStyle = m === "win" ? C("--surface") : C("--ink-2");
+        c.font = F(800, 20); c.textAlign = "center";
+        c.fillText(m === "win" ? "✓" : "✕", tx + 17, ty + 25);
+        c.textAlign = "left";
+      }
+      tx += 43;
+    });
+
+    c.fillStyle = C("--ink-3"); c.font = F(600, 22); c.textAlign = "center";
+    c.fillText("Bangladesh Guesser · জেলাখুঁজি", W / 2, 1268);
+    c.textAlign = "left";
+    return cv;
+  }
+
+  function cardBlob() {
+    return new Promise(function (resolve, reject) {
+      drawCard().toBlob(function (b) { b ? resolve(b) : reject(new Error("card render failed")); }, "image/png");
+    });
+  }
+
+  /* --- report actions --- */
+  function copyText(text, btn) {
+    const flash = function () {
+      const label = btn.querySelector("span");
+      const old = label.textContent;
+      label.textContent = T().copied;
+      btn.disabled = true;
+      setTimeout(function () { label.textContent = old; btn.disabled = false; }, 1400);
+    };
+    const legacy = function () {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      ta.remove();
+      flash();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(flash, legacy);
+    else legacy();
+  }
+
+  $("btn-report").addEventListener("click", function () { if (done) showReport(); });
+  $("rc-close").addEventListener("click", closeReport);
+  $("rc-again").addEventListener("click", newGame);
+  elReport.addEventListener("pointerdown", function (e) { if (e.target === elReport) closeReport(); });
+
+  $("rc-copy").addEventListener("click", function () { copyText(shareText(), this); });
+
+  $("rc-download").addEventListener("click", function () {
+    cardBlob().then(function (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "bangladesh-guesser-report.png";
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    });
+  });
+
+  $("rc-share").addEventListener("click", async function () {
+    const text = shareText();
+    try {
+      if (navigator.canShare) {
+        const file = new File([await cardBlob()], "bangladesh-guesser-report.png", { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: text }); return; }
+      }
+      if (navigator.share) { await navigator.share({ text: text }); return; }
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+    }
+    copyText(text, this); // no share sheet available — copy the result instead
   });
 
   $("btn-theme").addEventListener("click", function () {
@@ -1301,6 +1819,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
     renderStats();
     setMsg(lastMsg);
     if (done) showBanner(revealed ? "reveal" : "win");
+    if (done && !elReport.hidden) renderReport();
   }
 
   function setLang(next) {
@@ -1319,6 +1838,7 @@ window.GAME_DATA = {"n":64,"maxKm":554,"divBn":{"Dhaka":"ঢাকা","Chattogr
 
   // exposed for tests
   window.__core = { normalize, lev, rank, resolveInput, pairKm, heatColor, bearingDeg, bnNum };
+  window.__ui = { newGame, makeGuess, endGame, scoreRound, shareText, drawCard, targetIndex: () => target };
 })();
 </script>
 </body>
